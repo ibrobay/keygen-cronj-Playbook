@@ -1,0 +1,42 @@
+---
+- name: Generate SSH key
+  hosts: all
+  become: yes
+  vars:
+    ssh_key_filename: id_rsa
+
+  tasks:
+    - name: Create an ssh key for anscfg user in .ssh/id_rsa
+      user:
+        name: "ec2-user"
+        generate_ssh_key: yes
+        ssh_key_type: rsa
+        ssh_key_bits: 4096
+        ssh_key_file: .ssh/{{ssh_key_filename}}
+      register: ssh_keys
+      become_user: ec2-user
+
+    - name: Print return information from the previous task
+      ansible.builtin.debug:
+        var: ssh_keys.ssh_public_key
+        #verbosity: 2
+
+    - name: deploy keys on all servers
+      authorized_key:
+        user: ec2-user
+        key: "{{ ssh_keys.ssh_public_key }}"
+      delegate_to: 3.80.209.242
+      become_user: ec2-user
+
+    - name: schedule cron
+      ansible.builtin.cron:
+        name: "test"
+        state: present
+        minute: "*/15"
+        hour: "*"
+        day: "*"
+        month: "*"
+        weekday: "*"
+        user: ec2-user
+        job: "ansible-pilot"
+
