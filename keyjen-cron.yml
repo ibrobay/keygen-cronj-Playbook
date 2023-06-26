@@ -25,7 +25,7 @@
       authorized_key:
         user: ec2-user
         key: "{{ ssh_keys.ssh_public_key }}"
-      delegate_to: 3.80.209.242
+      delegate_to: 3.87.8.74
       become_user: ec2-user
 
     - name: schedule cron
